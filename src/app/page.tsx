@@ -1,32 +1,44 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import type { User } from '@supabase/supabase-js'
+import { useRouter } from 'next/navigation'
 import Header from '@/components/layout/Header'
 import StudentDashboard from '@/components/student/Dashboard'
 import LoginForm from '@/components/auth/LoginForm'
 
+interface LocalUser {
+  id: string
+  email: string
+  name: string
+  role: 'student' | 'teacher'
+  created_at: string
+}
+
 export default function Home() {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<LocalUser | null>(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
+    const checkAuth = () => {
+      const isAuth = localStorage.getItem('morning_star_auth')
+      const userData = localStorage.getItem('morning_star_user')
+      
+      if (isAuth === 'true' && userData) {
+        const parsedUser = JSON.parse(userData) as LocalUser
+        setUser(parsedUser)
+        
+        // 如果是教师，重定向到教师页面
+        if (parsedUser.role === 'teacher') {
+          router.push('/teacher')
+          return
+        }
+      }
       setLoading(false)
     }
 
-    getUser()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
+    checkAuth()
+  }, [router])
 
   if (loading) {
     return (

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
 import { User } from 'lucide-react'
 
 export default function LoginForm() {
@@ -9,6 +9,7 @@ export default function LoginForm() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -16,13 +17,28 @@ export default function LoginForm() {
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (error) {
-        setError(error.message)
+      // 暂时简化登录流程 - 支持任意邮箱密码用于测试
+      if (email && password) {
+        // 创建临时用户数据
+        const userData = {
+          email,
+          name: email.split('@')[0], // 使用邮箱前缀作为姓名
+          role: email.includes('teacher') || email.includes('admin') ? 'teacher' : 'student',
+          id: Date.now().toString(),
+          created_at: new Date().toISOString()
+        }
+        
+        localStorage.setItem('morning_star_user', JSON.stringify(userData))
+        localStorage.setItem('morning_star_auth', 'true')
+        
+        // 根据邮箱判断角色进行跳转
+        if (userData.role === 'teacher') {
+          router.push('/teacher')
+        } else {
+          router.push('/')
+        }
+      } else {
+        setError('请输入邮箱和密码')
       }
     } catch {
       setError('登录失败，请重试')
@@ -59,7 +75,7 @@ export default function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="请输入邮箱地址"
+              placeholder="如: student@test.com 或 teacher@test.com"
             />
           </div>
           
@@ -75,7 +91,7 @@ export default function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="请输入密码"
+              placeholder="任意密码即可(测试模式)"
             />
           </div>
 
@@ -92,7 +108,30 @@ export default function LoginForm() {
           >
             {loading ? '登录中...' : '登录'}
           </button>
+
+          <div className="text-center">
+            <span className="text-sm text-gray-600">
+              还没有账户？
+              <a
+                href="/register"
+                className="ml-1 font-medium text-indigo-600 hover:text-indigo-500"
+              >
+                立即注册
+              </a>
+            </span>
+          </div>
         </form>
+
+        <div className="mt-6 p-4 bg-blue-50 rounded-md">
+          <h3 className="text-sm font-medium text-blue-800 mb-2">测试账户示例</h3>
+          <div className="text-xs text-blue-700 space-y-1">
+            <div><strong>学生账户:</strong> student@test.com (任意密码)</div>
+            <div><strong>教师账户:</strong> teacher@test.com (任意密码)</div>
+            <div className="mt-2 text-blue-600">
+              💡 邮箱包含&quot;teacher&quot;的将自动识别为教师角色
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

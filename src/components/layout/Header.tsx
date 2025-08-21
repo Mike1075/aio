@@ -1,30 +1,39 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
 import { User as UserIcon, LogOut } from 'lucide-react'
-import type { User } from '@supabase/supabase-js'
+
+interface LocalUser {
+  id: string
+  email: string
+  name: string
+  role: 'student' | 'teacher'
+  created_at: string
+}
 
 export default function Header() {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<LocalUser | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
+    const checkAuth = () => {
+      const isAuth = localStorage.getItem('morning_star_auth')
+      const userData = localStorage.getItem('morning_star_user')
+      
+      if (isAuth === 'true' && userData) {
+        setUser(JSON.parse(userData) as LocalUser)
+      }
     }
 
-    getUser()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null)
-    })
-
-    return () => subscription.unsubscribe()
+    checkAuth()
   }, [])
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
+  const handleLogout = () => {
+    localStorage.removeItem('morning_star_auth')
+    localStorage.removeItem('morning_star_user')
+    setUser(null)
+    router.push('/login')
   }
 
   if (!user) return null
@@ -42,7 +51,10 @@ export default function Header() {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <UserIcon className="h-5 w-5 text-gray-400" />
-              <span className="text-sm text-gray-700">{user.email}</span>
+              <div className="flex flex-col">
+                <span className="text-sm text-gray-700">{user.name}</span>
+                <span className="text-xs text-gray-500">{user.role === 'teacher' ? '教师' : '学生'}</span>
+              </div>
             </div>
             
             <button
