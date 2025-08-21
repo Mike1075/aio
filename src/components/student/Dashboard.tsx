@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { BookOpen, Calendar, MessageCircle, TrendingUp, Clock } from 'lucide-react'
+import { useState } from 'react'
+import { BookOpen, Calendar, TrendingUp, Clock } from 'lucide-react'
 import ChatAssistant from './ChatAssistant'
 import LearningPlan from './LearningPlan'
 
@@ -12,7 +12,7 @@ interface LearningProgress {
 }
 
 export default function StudentDashboard() {
-  const [learningProgress, setLearningProgress] = useState<LearningProgress[]>([
+  const [learningProgress] = useState<LearningProgress[]>([
     { courseName: '数据结构', progress: 75, nextDeadline: '2025-08-25' },
     { courseName: '算法设计', progress: 60, nextDeadline: '2025-08-27' },
     { courseName: '软件工程', progress: 85, nextDeadline: '2025-08-30' },

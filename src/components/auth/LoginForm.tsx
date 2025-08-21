@@ -24,7 +24,7 @@ export default function LoginForm() {
       if (error) {
         setError(error.message)
       }
-    } catch (err) {
+    } catch {
       setError('登录失败，请重试')
     } finally {
       setLoading(false)

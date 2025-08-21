@@ -82,13 +82,13 @@ export interface ChatMessage {
   content: string
   role: 'user' | 'assistant'
   timestamp: string
-  context?: any
+  context?: Record<string, unknown>
 }
 
 export interface KnowledgeChunk {
   id: string
   content: string
-  metadata: Record<string, any>
+  metadata: Record<string, unknown>
   embedding?: number[]
   created_at: string
 }

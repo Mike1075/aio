@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Send, MessageCircle, Bot } from 'lucide-react'
+import { Send, Bot } from 'lucide-react'
 
 interface Message {
   id: string
@@ -68,7 +68,7 @@ export default function ChatAssistant() {
       }
 
       setMessages(prev => [...prev, assistantMessage])
-    } catch (error) {
+    } catch {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: '抱歉，我现在无法回答。请稍后再试。',

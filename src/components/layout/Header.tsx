@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { User as UserIcon, LogOut, Settings } from 'lucide-react'
+import { User as UserIcon, LogOut } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 
 export default function Header() {
