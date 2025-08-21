@@ -14,14 +14,24 @@ export default function ChatAssistant() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: '你好！我是你的AI学习助手，有什么可以帮助你的吗？',
+      content: '你好！我是你的AI学习助手"启明星"，有什么可以帮助你的吗？🌟',
       role: 'assistant',
       timestamp: new Date()
     }
   ])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [showSuggestions, setShowSuggestions] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const quickQuestions = [
+    "什么是数据结构？",
+    "如何学习算法？", 
+    "Python基础语法",
+    "Git使用方法",
+    "数据库设计原则",
+    "Web开发入门"
+  ]
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -31,12 +41,19 @@ export default function ChatAssistant() {
     scrollToBottom()
   }, [messages])
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return
+  const handleQuickQuestion = (question: string) => {
+    setInput(question)
+    setShowSuggestions(false)
+    handleSendMessage(question)
+  }
+
+  const handleSendMessage = async (messageText?: string) => {
+    const messageContent = messageText || input.trim()
+    if (!messageContent || isLoading) return
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      content: input.trim(),
+      content: messageContent,
       role: 'user',
       timestamp: new Date()
     }
@@ -44,6 +61,7 @@ export default function ChatAssistant() {
     setMessages(prev => [...prev, userMessage])
     setInput('')
     setIsLoading(true)
+    setShowSuggestions(false)
 
     try {
       const response = await fetch('/api/chat', {
@@ -51,7 +69,7 @@ export default function ChatAssistant() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: input.trim() }),
+        body: JSON.stringify({ message: messageContent }),
       })
 
       if (!response.ok) {
@@ -68,10 +86,11 @@ export default function ChatAssistant() {
       }
 
       setMessages(prev => [...prev, assistantMessage])
-    } catch {
+    } catch (error) {
+      console.error('Chat error:', error)
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: '抱歉，我现在无法回答。请稍后再试。',
+        content: '抱歉，AI助手暂时遇到了问题。请检查网络连接后重试，或尝试问一些基础问题让我从知识库中为您查找信息。',
         role: 'assistant',
         timestamp: new Date()
       }
@@ -79,6 +98,10 @@ export default function ChatAssistant() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleSend = () => {
+    handleSendMessage()
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -134,6 +157,24 @@ export default function ChatAssistant() {
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* 快速问题建议 */}
+        {showSuggestions && messages.length === 1 && (
+          <div className="mt-4">
+            <p className="text-xs text-gray-500 mb-2">💡 试试这些常见问题：</p>
+            <div className="grid grid-cols-2 gap-2">
+              {quickQuestions.map((question, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleQuickQuestion(question)}
+                  className="text-xs text-left text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 p-2 rounded border border-indigo-200 transition-colors"
+                >
+                  {question}
+                </button>
+              ))}
             </div>
           </div>
         )}

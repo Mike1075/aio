@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { Calendar, Clock, CheckCircle2, Target, Book } from 'lucide-react'
+import Toast from '@/components/ui/Toast'
+import { useToast } from '@/hooks/useToast'
 
 interface LearningGoal {
   id: string
@@ -14,7 +16,8 @@ interface LearningGoal {
 }
 
 export default function LearningPlan() {
-  const [goals] = useState<LearningGoal[]>([
+  const { toast, showToast, hideToast } = useToast()
+  const [goals, setGoals] = useState<LearningGoal[]>([
     {
       id: '1',
       title: '掌握链表数据结构',
@@ -69,6 +72,27 @@ export default function LearningPlan() {
       case 'low': return '低优先级'
       default: return '未知'
     }
+  }
+
+  const updateGoalProgress = (goalId: string, newProgress: number) => {
+    const goal = goals.find(g => g.id === goalId)
+    const finalProgress = Math.min(100, Math.max(0, newProgress))
+    
+    setGoals(goals.map(goal => 
+      goal.id === goalId 
+        ? { ...goal, progress: finalProgress }
+        : goal
+    ))
+    
+    if (finalProgress === 100 && goal) {
+      showToast(`🎉 恭喜完成"${goal.title}"！`, 'success')
+    } else if (finalProgress > (goal?.progress || 0)) {
+      showToast(`进度更新：${finalProgress}%`, 'info')
+    }
+  }
+
+  const markGoalComplete = (goalId: string) => {
+    updateGoalProgress(goalId, 100)
   }
 
   const completedGoals = goals.filter(goal => goal.progress === 100).length
@@ -156,9 +180,27 @@ export default function LearningPlan() {
                   </div>
                 )}
               </div>
-              <button className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
-                查看详情
-              </button>
+              <div className="flex items-center space-x-2">
+                {goal.progress < 100 && (
+                  <>
+                    <button
+                      onClick={() => updateGoalProgress(goal.id, goal.progress + 10)}
+                      className="text-xs text-green-600 hover:text-green-800 font-medium px-2 py-1 border border-green-300 rounded"
+                    >
+                      +10%
+                    </button>
+                    <button
+                      onClick={() => markGoalComplete(goal.id)}
+                      className="text-xs text-indigo-600 hover:text-indigo-800 font-medium px-2 py-1 border border-indigo-300 rounded"
+                    >
+                      完成
+                    </button>
+                  </>
+                )}
+                <button className="text-xs text-gray-600 hover:text-gray-800 font-medium">
+                  详情
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -170,6 +212,13 @@ export default function LearningPlan() {
           + 添加新的学习目标
         </button>
       </div>
+      
+      <Toast 
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
     </div>
   )
 }

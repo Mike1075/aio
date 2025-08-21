@@ -55,24 +55,97 @@ export const knowledgeBase = [
     category: '版本控制',
     keywords: ['Git', '版本控制', 'git add', 'git commit', 'git push', 'git pull'],
     course: '软件工程'
+  },
+  {
+    id: '9',
+    content: 'Python是一种高级编程语言，语法简洁易读。支持面向对象、函数式编程。常用于数据分析、Web开发、人工智能等领域。',
+    category: 'Python编程',
+    keywords: ['Python', 'python编程', '编程语言', '数据分析', 'AI'],
+    course: '程序设计'
+  },
+  {
+    id: '10',
+    content: 'HTTP是超文本传输协议，是Web通信的基础。常见状态码：200成功、404未找到、500服务器错误。支持GET、POST、PUT、DELETE等方法。',
+    category: 'Web协议',
+    keywords: ['HTTP', 'web', '协议', 'GET', 'POST', '状态码'],
+    course: 'Web开发'
+  },
+  {
+    id: '11',
+    content: '线性表是最基本的数据结构，元素间具有一对一的关系。可以用数组或链表实现。数组支持随机访问，链表便于插入删除。',
+    category: '线性表',
+    keywords: ['线性表', '数组', '链表', '数据结构基础'],
+    course: '数据结构'
+  },
+  {
+    id: '12',
+    content: '二叉树是每个节点最多有两个子节点的树结构。遍历方式有前序、中序、后序。二叉搜索树支持高效的查找、插入、删除操作。',
+    category: '树结构',
+    keywords: ['二叉树', '树', '遍历', '二叉搜索树', 'BST'],
+    course: '数据结构'
+  },
+  {
+    id: '13',
+    content: 'CSS是层叠样式表，用于描述网页的外观和格式。支持选择器、盒模型、布局、动画等。Flexbox和Grid是现代布局的重要技术。',
+    category: 'CSS样式',
+    keywords: ['CSS', '样式', 'flexbox', 'grid', '布局', '前端'],
+    course: 'Web开发'
+  },
+  {
+    id: '14',
+    content: '递归是函数调用自身的编程技巧。必须有基础情况和递推关系。经典应用包括阶乘、斐波那契数列、树的遍历等。',
+    category: '递归算法',
+    keywords: ['递归', '算法', '阶乘', '斐波那契', '树遍历'],
+    course: '算法设计'
+  },
+  {
+    id: '15',
+    content: '单元测试是软件测试的基础，测试单个函数或方法。应该遵循AAA模式：Arrange（准备）、Act（执行）、Assert（断言）。',
+    category: '软件测试',
+    keywords: ['单元测试', '测试', 'AAA模式', 'junit', 'pytest'],
+    course: '软件工程'
   }
 ]
 
-// 简单的关键词匹配算法
+// 智能关键词匹配算法
 export function searchKnowledge(query: string): typeof knowledgeBase {
-  const searchTerms = query.toLowerCase().split(' ')
+  const searchTerms = query.toLowerCase().split(/[\s,，、。？！]+/).filter(term => term.length > 0)
   
-  return knowledgeBase.filter(item => {
+  // 计算相关性得分
+  const scoredResults = knowledgeBase.map(item => {
+    let score = 0
     const content = item.content.toLowerCase()
     const keywords = item.keywords.map(k => k.toLowerCase())
     const category = item.category.toLowerCase()
     
-    return searchTerms.some(term => 
-      content.includes(term) || 
-      keywords.some(keyword => keyword.includes(term)) ||
-      category.includes(term)
-    )
-  }).slice(0, 3) // 限制返回3个最相关的结果
+    searchTerms.forEach(term => {
+      // 关键词完全匹配得分更高
+      if (keywords.some(keyword => keyword === term)) {
+        score += 10
+      }
+      // 关键词包含匹配
+      else if (keywords.some(keyword => keyword.includes(term))) {
+        score += 5
+      }
+      // 分类匹配
+      if (category.includes(term)) {
+        score += 8
+      }
+      // 内容匹配
+      if (content.includes(term)) {
+        score += 3
+      }
+    })
+    
+    return { ...item, score }
+  })
+  
+  // 按得分排序并返回前3个有得分的结果
+  return scoredResults
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map(({ ...item }) => item) // 移除score字段
 }
 
 // 获取随机学习建议
@@ -83,7 +156,16 @@ export function getRandomLearningTip(): string {
     '编程时要多写注释，这样以后回看代码会更容易理解。',
     '学习新知识时，尝试与已有知识建立联系。',
     '定期总结和复习，防止遗忘。',
-    '多做练习题，理论与实践相结合。'
+    '多做练习题，理论与实践相结合。',
+    '学习编程时，先理解原理再动手编码。',
+    '遇到困难时，尝试画图或写伪代码来理清思路。',
+    '利用调试工具step by step跟踪程序执行过程。',
+    '阅读优秀的开源代码可以提高编程水平。',
+    '学习数据结构时，要理解每种结构的适用场景。',
+    '算法学习要注重时间和空间复杂度分析。',
+    'Web开发要关注用户体验和页面性能。',
+    '软件工程强调规范和团队协作。',
+    '数据库设计要考虑数据一致性和查询效率。'
   ]
   
   return tips[Math.floor(Math.random() * tips.length)]

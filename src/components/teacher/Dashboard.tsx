@@ -17,6 +17,9 @@ interface StudentRecord {
 export default function TeacherDashboard() {
   const [selectedCourse, setSelectedCourse] = useState('数据结构')
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedStudent, setSelectedStudent] = useState<StudentRecord | null>(null)
+  const [showMessageModal, setShowMessageModal] = useState(false)
+  const [messageContent, setMessageContent] = useState('')
 
   const courses = ['数据结构', '算法设计', '软件工程', 'Web开发']
   
@@ -100,6 +103,23 @@ export default function TeacherDashboard() {
 
   const riskStudents = filteredStudents.filter(s => s.status === 'risk').length
   const warningStudents = filteredStudents.filter(s => s.status === 'warning').length
+  const handleViewDetails = (student: StudentRecord) => {
+    setSelectedStudent(student)
+  }
+
+  const handleSendMessage = (student: StudentRecord) => {
+    setSelectedStudent(student)
+    setShowMessageModal(true)
+  }
+
+  const handleSendMessageSubmit = () => {
+    // 这里可以集成实际的消息发送功能
+    alert(`消息已发送给 ${selectedStudent?.name}: ${messageContent}`)
+    setShowMessageModal(false)
+    setMessageContent('')
+    setSelectedStudent(null)
+  }
+
   const avgProgress = Math.round(filteredStudents.reduce((sum, s) => sum + s.progress, 0) / filteredStudents.length)
   const avgScore = Math.round(filteredStudents.reduce((sum, s) => sum + s.avgScore, 0) / filteredStudents.length)
 
@@ -258,10 +278,16 @@ export default function TeacherDashboard() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button className="text-indigo-600 hover:text-indigo-900 mr-3">
+                      <button 
+                        onClick={() => handleViewDetails(student)}
+                        className="text-indigo-600 hover:text-indigo-900 mr-3"
+                      >
                         查看详情
                       </button>
-                      <button className="text-indigo-600 hover:text-indigo-900">
+                      <button 
+                        onClick={() => handleSendMessage(student)}
+                        className="text-indigo-600 hover:text-indigo-900"
+                      >
                         发送消息
                       </button>
                     </td>
@@ -271,6 +297,129 @@ export default function TeacherDashboard() {
             </table>
           </div>
         </div>
+
+        {/* 学生详情模态框 */}
+        {selectedStudent && !showMessageModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">学生详情</h3>
+                <button
+                  onClick={() => setSelectedStudent(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="space-y-3">
+                <div>
+                  <span className="text-sm font-medium text-gray-500">姓名：</span>
+                  <span className="text-sm text-gray-900">{selectedStudent.name}</span>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-500">学号：</span>
+                  <span className="text-sm text-gray-900">{selectedStudent.studentId}</span>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-500">课程：</span>
+                  <span className="text-sm text-gray-900">{selectedStudent.course}</span>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-500">学习进度：</span>
+                  <span className="text-sm text-gray-900">{selectedStudent.progress}%</span>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-500">平均成绩：</span>
+                  <span className="text-sm text-gray-900">{selectedStudent.avgScore}</span>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-500">最后活跃：</span>
+                  <span className="text-sm text-gray-900">{selectedStudent.lastActive}</span>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-500">状态：</span>
+                  <span className={`text-sm px-2 py-1 rounded ${getStatusColor(selectedStudent.status)}`}>
+                    {getStatusText(selectedStudent.status)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-6 flex space-x-3">
+                <button
+                  onClick={() => {
+                    setShowMessageModal(true)
+                  }}
+                  className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+                >
+                  发送消息
+                </button>
+                <button
+                  onClick={() => setSelectedStudent(null)}
+                  className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+                >
+                  关闭
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 发送消息模态框 */}
+        {showMessageModal && selectedStudent && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  发送消息给 {selectedStudent.name}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowMessageModal(false)
+                    setSelectedStudent(null)
+                    setMessageContent('')
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  消息内容
+                </label>
+                <textarea
+                  value={messageContent}
+                  onChange={(e) => setMessageContent(e.target.value)}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="请输入要发送的消息..."
+                />
+              </div>
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={handleSendMessageSubmit}
+                  disabled={!messageContent.trim()}
+                  className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  发送
+                </button>
+                <button
+                  onClick={() => {
+                    setShowMessageModal(false)
+                    setSelectedStudent(null)
+                    setMessageContent('')
+                  }}
+                  className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+                >
+                  取消
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -6,7 +6,10 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!)
 
 export async function POST(req: NextRequest) {
   try {
+    console.log('API Key available:', !!process.env.GOOGLE_AI_API_KEY)
+    
     const { message } = await req.json()
+    console.log('Received message:', message)
 
     if (!message) {
       return NextResponse.json(
@@ -36,6 +39,26 @@ export async function POST(req: NextRequest) {
 学习小贴士: ${learningTip}
 
 请以中文回答，保持简洁但有用。如果是编程问题，可以提供代码示例。如果是学习方法问题，提供具体可行的建议。优先使用知识库中的相关内容来回答问题，如果知识库中没有相关内容，则基于你的知识来回答。`
+
+    // 检查API密钥是否可用
+    if (!process.env.GOOGLE_AI_API_KEY) {
+      // 如果没有API密钥，返回基于知识库的模拟回答
+      let mockResponse = '抱歉，AI服务暂时不可用。'
+      
+      if (relevantKnowledge.length > 0) {
+        mockResponse = `根据我们的知识库，我找到了相关信息：\n\n${relevantKnowledge.map(item => 
+          `**${item.category}**: ${item.content}`
+        ).join('\n\n')}\n\n💡 ${learningTip}`
+      } else {
+        mockResponse = `我理解您的问题："${message}"。\n\n${learningTip}\n\n由于当前处于演示模式，请稍后再试或联系管理员配置AI服务。`
+      }
+      
+      return NextResponse.json({ 
+        response: mockResponse,
+        knowledgeUsed: relevantKnowledge.length > 0,
+        mockMode: true
+      })
+    }
 
     const result = await model.generateContent(prompt)
     const response = await result.response
