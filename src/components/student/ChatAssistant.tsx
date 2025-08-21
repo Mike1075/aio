@@ -64,7 +64,7 @@ export default function ChatAssistant() {
     setShowSuggestions(false)
 
     try {
-      const response = await fetch('/api/chat', {
+      const response: Response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -78,9 +78,16 @@ export default function ChatAssistant() {
 
       const data = await response.json()
       
+      let responseContent = data.response
+      
+      // 如果是回退模式，添加友好提示
+      if (data.fallbackMode) {
+        responseContent = `💡 **知识库模式**\n\n${data.response}`
+      }
+      
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: data.response,
+        content: responseContent,
         role: 'assistant',
         timestamp: new Date()
       }

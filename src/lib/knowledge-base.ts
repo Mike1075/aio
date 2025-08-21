@@ -109,7 +109,14 @@ export const knowledgeBase = [
 
 // 智能关键词匹配算法
 export function searchKnowledge(query: string): typeof knowledgeBase {
-  const searchTerms = query.toLowerCase().split(/[\s,，、。？！]+/).filter(term => term.length > 0)
+  if (!query || query.trim().length === 0) {
+    return []
+  }
+
+  const searchTerms = query.toLowerCase()
+    .replace(/[？！。，、]/g, ' ') // 替换中文标点
+    .split(/[\s,]+/)
+    .filter(term => term.length > 1) // 过滤单字符
   
   // 计算相关性得分
   const scoredResults = knowledgeBase.map(item => {
@@ -117,23 +124,32 @@ export function searchKnowledge(query: string): typeof knowledgeBase {
     const content = item.content.toLowerCase()
     const keywords = item.keywords.map(k => k.toLowerCase())
     const category = item.category.toLowerCase()
+    const title = item.course.toLowerCase()
     
     searchTerms.forEach(term => {
-      // 关键词完全匹配得分更高
+      // 关键词完全匹配得分最高
       if (keywords.some(keyword => keyword === term)) {
+        score += 15
+      }
+      // 分类完全匹配
+      else if (category === term) {
+        score += 12
+      }
+      // 课程匹配
+      else if (title.includes(term)) {
         score += 10
       }
       // 关键词包含匹配
-      else if (keywords.some(keyword => keyword.includes(term))) {
-        score += 5
-      }
-      // 分类匹配
-      if (category.includes(term)) {
+      else if (keywords.some(keyword => keyword.includes(term) || term.includes(keyword))) {
         score += 8
       }
+      // 分类包含匹配
+      else if (category.includes(term) || term.includes(category)) {
+        score += 6
+      }
       // 内容匹配
-      if (content.includes(term)) {
-        score += 3
+      else if (content.includes(term)) {
+        score += 4
       }
     })
     
@@ -141,11 +157,25 @@ export function searchKnowledge(query: string): typeof knowledgeBase {
   })
   
   // 按得分排序并返回前3个有得分的结果
-  return scoredResults
+  const filteredResults = scoredResults
     .filter(item => item.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, 3)
-    .map(({ ...item }) => item) // 移除score字段
+
+  // 如果没有匹配结果，尝试模糊匹配
+  if (filteredResults.length === 0) {
+    const fuzzyResults = knowledgeBase.filter(item => {
+      const allText = `${item.content} ${item.category} ${item.keywords.join(' ')} ${item.course}`.toLowerCase()
+      return searchTerms.some(term => 
+        allText.includes(term) || 
+        term.length > 2 && allText.includes(term.substring(0, term.length - 1))
+      )
+    }).slice(0, 2)
+    
+    return fuzzyResults
+  }
+  
+  return filteredResults.map(({ ...item }) => item)
 }
 
 // 获取随机学习建议
